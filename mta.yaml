@@ -1,0 +1,52 @@
+## Generated mta.yaml based on template version 0.4.0
+## appName = s4hana_cap
+## language=nodejs; multitenant=false
+## approuter=
+_schema-version: '3.1'
+ID: s4hana_cap
+version: 1.0.0
+description: "A simple CAP project."
+parameters:
+  enable-parallel-deployments: true
+   
+build-parameters:
+  before-all:
+   - builder: custom
+     commands:
+      - npm install --production
+      - npx -p @sap/cds-dk cds build --production
+
+modules:
+ # --------------------- SERVER MODULE ------------------------
+ - name: s4hana_cap-srv
+ # ------------------------------------------------------------
+   type: nodejs
+   path: gen/srv
+   parameters:
+     buildpack: nodejs_buildpack
+   provides:
+    - name: srv-api      # required by consumers of CAP services (e.g. approuter)
+      properties:
+        srv-url: ${default-url}
+   requires:
+    - name: uaa
+    - name: dest
+
+resources:
+- name: uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: my-uaa
+    service-plan: application
+- name: dest
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: destination
+    service-name: my-dest
+    service-plan: lite
+
+
+
+
